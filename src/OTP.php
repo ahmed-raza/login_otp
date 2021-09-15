@@ -14,21 +14,10 @@ class OTP {
     $this->username = $username;
 
     $uid = $this->getField('uid');
-    $human_readable_otp = rand(100000, 999999);
 
     $this->tempStorageFactory->get('login_otp')->set('uid', $uid);
     $this->tempStorageFactory->get('login_otp')->set('otp', $human_readable_otp);
 
-    $database = \Drupal::database();
-    $database = $database->insert('login_otp')->fields([
-      'uid' => $uid,
-      'otp' => \Drupal::service('password')->hash($human_readable_otp),
-      'expiration' => strtotime("+5 minutes",time())
-    ]);
-
-    if ($database->execute()) {
-      return $human_readable_otp;
-    }
 
     return FALSE;
   }
@@ -54,5 +43,26 @@ class OTP {
               ->execute()
               ->fetchAssoc();
     return $query['uid'];
+  }
+
+  private function exists($uid) {
+    $database = \Drupal::database();
+    $exists = $database->select('users_field_data', 'u')
+              ->fields('u')
+              ->condition('uid', $uid, '=')
+              ->execute()
+              ->fetchAssoc();
+    return $exists ?? true;
+  }
+
+  private function new($uid) {
+    $human_readable_otp = rand(100000, 999999);
+    $database = \Drupal::database();
+    $database = $database->insert('login_otp')->fields([
+      'uid' => $uid,
+      'otp' => \Drupal::service('password')->hash($human_readable_otp),
+      'expiration' => strtotime("+5 minutes",time())
+    ])->execute();
+    return $human_readable_otp;
   }
 }
