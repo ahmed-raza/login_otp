@@ -4,4 +4,4 @@ login_otp.otp_form:
     _form: '\Drupal\login_otp\Form\OTPForm'
     _title: 'OTPForm'
   requirements:
-    _access: 'TRUE'
+    _role: anonymous
