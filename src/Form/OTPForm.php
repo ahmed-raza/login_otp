@@ -2,20 +2,32 @@
 
 namespace Drupal\login_otp\Form;
 
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Ajax\RedirectCommand;
 use Drupal\login_otp\OTP;
 use Drupal\user\Entity\User;
-
 /**
  * Class OTPForm.
  */
 class OTPForm extends FormBase {
+  protected $messenger;
+  protected $loggerFactory;
+  private $tempStoreFactory;
 
+  public function __construct(PrivateTempStoreFactory $tempStoreFactory) {
+    $this->tempStoreFactory = $tempStoreFactory;
+  }
+
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('tempstore.private')
+    );
+  }
   /**
    * {@inheritdoc}
    */
@@ -48,27 +60,17 @@ class OTPForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    $otp = new OTP();
-    $uid = \Drupal::service('tempstore.private')->get('login_otp')->get('uid');
-    foreach ($form_state->getValues() as $key => $value) {
-      if ($key == 'otp') {
-        if (empty($value)) {
-          $form_state->setErrorByName('otp', $this->t('OTP is required.'));
-        }
-        if (strlen($value) < 6) {
-          $form_state->setErrorByName('otp', $this->t('OTP is incomplete.'));
-        }
-        if ($otp->check($uid, $value) == false) {
-          $form_state->setErrorByName('otp', $this->t('Invalid or expired OTP.'));
-        }
-      }
-    }
-    parent::validateForm($form, $form_state);
-  }
+  public function validateForm(array &$form, FormStateInterface $form_state) {}
 
   public function ajaxOTPCallback(array &$form, FormStateInterface $form_state) {
     $response = new AjaxResponse();
+    $otp = new OTP();
+    $tempstore = $this->tempStoreFactory->get('login_otp');
+    $uid = $tempstore->get('uid');
+    $value = $form_state->getValue('otp');
+    if ($otp->check($uid, $value) == false) {
+      $form_state->setErrorByName('otp', $this->t('Invalid or expired OTP.'));
+    }
     if ($form_state->getErrors()) {
       unset($form['#prefix']);
       unset($form['#suffix']);
@@ -79,11 +81,9 @@ class OTPForm extends FormBase {
       $response->addCommand(new ReplaceCommand('.otp-form', $form));
       return $response;
     }
-    $tempstore = \Drupal::service('tempstore.private')->get('login_otp');
-    $account = User::load($tempstore->get('uid'));
-    $otp = new OTP();
-    $otp->expire($tempstore->get('uid'));
-    $tempstore->delete('email');
+    $account = User::load($uid);
+    $otp->expire($uid);
+    $tempstore->delete('uid');
     user_login_finalize($account);
     $redirect_command = new RedirectCommand('/user');
     $response->addCommand($redirect_command);
