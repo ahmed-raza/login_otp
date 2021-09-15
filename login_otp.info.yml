@@ -1,0 +1,5 @@
+name: 'Login OTP'
+type: module
+description: 'Provides login via Email OTP.'
+core_version_requirement: ^8 || ^9
+package: 'Custom'
