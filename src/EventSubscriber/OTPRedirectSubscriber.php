@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\login_otp\EventSubscriber;
+namespace Drupal\email_login_otp\EventSubscriber;
 
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\KernelEvents;

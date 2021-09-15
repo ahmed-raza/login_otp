@@ -1,7 +1,7 @@
 <?php
 
-function login_otp_schema() {
-  $schema['login_otp'] = [
+function email_login_otp_schema() {
+  $schema['email_login_otp'] = [
     'description' => 'Stores the generated OTP per user.',
     'fields'      => [
       'uid' => [

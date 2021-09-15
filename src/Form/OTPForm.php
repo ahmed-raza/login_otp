@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\login_otp\Form;
+namespace Drupal\email_login_otp\Form;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
@@ -9,7 +9,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Ajax\RedirectCommand;
-use Drupal\login_otp\OTP;
+use Drupal\email_login_otp\OTP;
 use Drupal\user\Entity\User;
 /**
  * Class OTPForm.
@@ -65,7 +65,7 @@ class OTPForm extends FormBase {
   public function ajaxOTPCallback(array &$form, FormStateInterface $form_state) {
     $response = new AjaxResponse();
     $otp = new OTP();
-    $tempstore = $this->tempStoreFactory->get('login_otp');
+    $tempstore = $this->tempStoreFactory->get('email_login_otp');
     $uid = $tempstore->get('uid');
     $value = $form_state->getValue('otp');
     if ($otp->check($uid, $value) == false) {

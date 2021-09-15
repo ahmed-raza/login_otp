@@ -11,18 +11,18 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Ajax\RedirectCommand;
-use Drupal\login_otp\OTP;
+use Drupal\email_login_otp\OTP;
 
 
 /**
  * Implements hook_help().
  */
-function login_otp_help($route_name, RouteMatchInterface $route_match) {
+function email_login_otp_help($route_name, RouteMatchInterface $route_match) {
   // $otp = new OTP('admin');
   // $otp = $otp->generateOTP();
   switch ($route_name) {
-    // Main module help for the login_otp module.
-    case 'help.page.login_otp':
+    // Main module help for the email_login_otp module.
+    case 'help.page.email_login_otp':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('Provides login via Email OTP.') . '</p>';
@@ -32,16 +32,16 @@ function login_otp_help($route_name, RouteMatchInterface $route_match) {
   }
 }
 
-function login_otp_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+function email_login_otp_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   if ($form_id == 'user_login_form') {
     unset($form['#submit'][0]);
     $form['actions']['submit']['#ajax'] = [
-      'callback' => 'login_otp_login_ajax_callback'
+      'callback' => 'email_login_otp_login_ajax_callback'
     ];
   }
 }
 
-function login_otp_login_ajax_callback(&$form, FormStateInterface $form_state) {
+function email_login_otp_login_ajax_callback(&$form, FormStateInterface $form_state) {
   $response = new AjaxResponse();
 
   if ($form_state->getErrors()) {
@@ -83,7 +83,7 @@ function login_otp_login_ajax_callback(&$form, FormStateInterface $form_state) {
   return $response;
 }
 
-function login_otp_mail($key, &$message, $params) {
+function email_login_otp_mail($key, &$message, $params) {
   $options = array(
     'langcode' => $message['langcode'],
   );
@@ -93,7 +93,7 @@ function login_otp_mail($key, &$message, $params) {
   $message['headers']['X-Mailer'] = 'Drupal';
   $message['from'] = \Drupal::config('system.site')->get('mail');
   switch ($key) {
-    case 'login_otp_mail':
+    case 'email_login_otp_mail':
       $message['subject'] = t('OTP Code');
       $message['body'][] = $params['message'];
     break;
