@@ -52,7 +52,7 @@ function login_otp_login_ajax_callback(&$form, FormStateInterface $form_state) {
       '#weight' => -10,
     ];
     $form_state->setRebuild();
-    $response->addCommand(new ReplaceCommand('.user-login-form', $form));
+    $response->addCommand(new ReplaceCommand('.'.$form['#attributes']['class'][0], $form));
     return $response;
   }
 
