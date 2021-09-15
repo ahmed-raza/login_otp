@@ -1,0 +1,39 @@
+<?php
+
+function login_otp_schema() {
+  $schema['login_otp'] = [
+    'description' => 'Stores the generated OTP per user.',
+    'fields'      => [
+      'uid' => [
+        'description' => 'UID of the User.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0
+      ],
+      'otp' => [
+        'description' => 'Hashed otp of the User.',
+        'type'        => 'varchar_ascii',
+        'length'      => 255,
+        'not null'    => TRUE,
+        'default'     => 0
+      ],
+      'expiration' => [
+        'description' => 'Time when otp will expire.',
+        'type'        => 'varchar_ascii',
+        'length'      => 50,
+        'not null'    => TRUE,
+        'default'     => 0
+      ],
+      'expired' => [
+        'description' => 'Bool if otp has expired.',
+        'type'        => 'int',
+        'length'      => 5,
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0
+      ]
+    ]
+  ];
+  return $schema;
+}
