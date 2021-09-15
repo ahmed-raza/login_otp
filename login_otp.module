@@ -10,7 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\ReplaceCommand;
-
+use Drupal\Core\Ajax\RedirectCommand;
 use Drupal\login_otp\OTP;
 
 
@@ -63,5 +63,39 @@ function login_otp_login_ajax_callback(&$form, FormStateInterface $form_state) {
    * Replace login form with OTP form.
    */
 
+  $otp = new OTP();
+  $otp_code = $otp->generateOTP($form_state->getValue('name'));
+  if ($otp_code && $otp->sendOTP($otp_code)) {
+    \Drupal::messenger()->addMessage(t('An OTP was sent to you via email. Please check your inbox.'));
+    $redirect_command = new RedirectCommand('/login-otp');
+    $response->addCommand($redirect_command);
+    return $response;
+  }
+
+  unset($form['#prefix']);
+  unset($form['#suffix']);
+  $form['status_messages'] = [
+    '#type' => 'status_messages',
+    '#weight' => -10,
+  ];
+  \Drupal::messenger()->addError(t('An error occurred while trying to generate OTP.'));
+  $response->addCommand(new ReplaceCommand('.'.$form['#attributes']['class'][0], $form));
   return $response;
+}
+
+function login_otp_mail($key, &$message, $params) {
+  $options = array(
+    'langcode' => $message['langcode'],
+  );
+  $message['headers']['MIME-Version'] = '1.0';
+  $message['headers']['Content-Type'] = 'text/html; charset=UTF-8; format=flowed';
+  $message['headers']['Content-Transfer-Encoding'] = '8Bit';
+  $message['headers']['X-Mailer'] = 'Drupal';
+  $message['from'] = \Drupal::config('system.site')->get('mail');
+  switch ($key) {
+    case 'login_otp_mail':
+      $message['subject'] = t('OTP Code');
+      $message['body'][] = $params['message'];
+    break;
+  }
 }
