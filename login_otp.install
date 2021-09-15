@@ -24,14 +24,6 @@ function login_otp_schema() {
         'length'      => 50,
         'not null'    => TRUE,
         'default'     => 0
-      ],
-      'expired' => [
-        'description' => 'Bool if otp has expired.',
-        'type'        => 'int',
-        'length'      => 5,
-        'unsigned'    => TRUE,
-        'not null'    => TRUE,
-        'default'     => 0
       ]
     ]
   ];
