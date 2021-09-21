@@ -11,15 +11,12 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Ajax\RedirectCommand;
-use Drupal\email_login_otp\OTP;
 
 
 /**
  * Implements hook_help().
  */
 function email_login_otp_help($route_name, RouteMatchInterface $route_match) {
-  // $otp = new OTP('admin');
-  // $otp = $otp->generateOTP();
   switch ($route_name) {
     // Main module help for the email_login_otp module.
     case 'help.page.email_login_otp':
@@ -63,9 +60,9 @@ function email_login_otp_login_ajax_callback(&$form, FormStateInterface $form_st
    * Replace login form with OTP form.
    */
 
-  $otp = new OTP();
-  $otp_code = $otp->generateOTP($form_state->getValue('name'));
-  if ($otp_code && $otp->sendOTP($otp_code)) {
+  $otp = \Drupal::service('email_login_otp.otp');
+  $otp_code = $otp->generate($form_state->getValue('name'));
+  if ($otp_code && $otp->send($otp_code)) {
     \Drupal::messenger()->addMessage(t('An OTP was sent to you via email. Please check your inbox.'));
     $redirect_command = new RedirectCommand('/login-otp');
     $response->addCommand($redirect_command);
