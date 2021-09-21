@@ -11,11 +11,9 @@ use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Ajax\RedirectCommand;
 use Drupal\user\Entity\User;
 /**
- * Class OTPForm.
+ * Class OtpForm.
  */
 class OtpForm extends FormBase {
-  protected $messenger;
-  protected $loggerFactory;
   private $tempStoreFactory;
   private $otp_service;
 
