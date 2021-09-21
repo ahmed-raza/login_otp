@@ -6,17 +6,22 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Path\CurrentPathStack;
 
 /**
- * Class OTPRedirectSubscriber.
+ * Class OtpRedirectSubscriber.
  */
 class OtpRedirectSubscriber implements EventSubscriberInterface {
+  protected $currentUser;
+  protected $currentPath;
 
   /**
-   * Constructs a new OTPRedirectSubscriber object.
+   * Constructs a new OtpRedirectSubscriber object.
    */
-  public function __construct() {
-
+  public function __construct(AccountInterface $current_user, CurrentPathStack $current_path) {
+    $this->currentUser = $current_user;
+    $this->currentPath = $current_path;
   }
 
   /**
@@ -34,7 +39,7 @@ class OtpRedirectSubscriber implements EventSubscriberInterface {
    *   The dispatched event.
    */
   public function loginRedirect(GetResponseEvent $event) {
-    if (\Drupal::service('path.current')->getPath() == '/login-otp' && \Drupal::currentUser()->isAuthenticated()) {
+    if ($this->currentPath == '/login-otp' && $this->currentUser->isAuthenticated()) {
       $redirect = new RedirectResponse('/user');
       return $redirect->send();
     }
