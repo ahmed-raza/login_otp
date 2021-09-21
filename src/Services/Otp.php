@@ -2,15 +2,25 @@
 
 namespace Drupal\email_login_otp\Services;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\Password\PasswordInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class Otp {
   protected $database;
+  protected $mailManager;
+  protected $languageManager;
+
   private $username;
   private $tempStorageFactory;
 
-  public function __construct(Connection $connection) {
-    $this->tempStorageFactory = \Drupal::service('tempstore.private');
+  public function __construct(Connection $connection, MailManagerInterface $mail_manager, PasswordInterface $hasher, LanguageManagerInterface $language_manager, ContainerInterface $container) {
+    $this->tempStorageFactory = $container->get('tempstore.private');
     $this->database = $connection;
+    $this->mailManager = $mail_manager;
+    $this->languageManager = $language_manager;
+    $this->hasher = $hasher;
   }
 
   public function generate($username) {
@@ -25,16 +35,14 @@ class Otp {
   }
 
   public function send($otp) {
-    $mail_manager = \Drupal::service('plugin.manager.mail');
-
     $to = $this->getField('mail');
-    $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    $langcode = $this->languageManager->getCurrentLanguage()->getId();
     $params['message'] = t('Hello, @username <br> This is the OTP you will use to login: @otp',
                         [
                           '@username' => $this->username,
                           '@otp' => $otp
                         ]);
-    return $mail_manager->mail('email_login_otp', 'email_login_otp_mail', $to, $langcode, $params, NULL, TRUE);
+    return $this->mailManager->mail('email_login_otp', 'email_login_otp_mail', $to, $langcode, $params, NULL, TRUE);
   }
 
   public function check($uid, $otp) {
@@ -44,7 +52,7 @@ class Otp {
                 ->condition('uid', $uid, '=')
                 ->execute()
                 ->fetchAssoc();
-      if ($select['expiration'] >= time() && \Drupal::service('password')->check($otp, $select['otp'])) {
+      if ($select['expiration'] >= time() && $this->hasher->check($otp, $select['otp'])) {
         return true;
       }
       return false;
@@ -81,7 +89,7 @@ class Otp {
     $human_readable_otp = rand(100000, 999999);
     $insert_otp_info = $this->database->insert('email_login_otp')->fields([
       'uid' => $uid,
-      'otp' => \Drupal::service('password')->hash($human_readable_otp),
+      'otp' => $this->hasher->hash($human_readable_otp),
       'expiration' => strtotime("+5 minutes",time())
     ])->execute();
     return $human_readable_otp;
@@ -91,7 +99,7 @@ class Otp {
     $human_readable_otp = rand(100000, 999999);
     $update_otp_info = $this->database->update('email_login_otp')
               ->fields([
-                'otp' => \Drupal::service('password')->hash($human_readable_otp),
+                'otp' => $this->hasher->hash($human_readable_otp),
                 'expiration' => strtotime("+5 minutes",time())
               ])
               ->condition('uid', $uid, '=')
