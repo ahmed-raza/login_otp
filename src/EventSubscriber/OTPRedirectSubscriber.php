@@ -10,7 +10,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Class OTPRedirectSubscriber.
  */
-class OTPRedirectSubscriber implements EventSubscriberInterface {
+class OtpRedirectSubscriber implements EventSubscriberInterface {
 
   /**
    * Constructs a new OTPRedirectSubscriber object.

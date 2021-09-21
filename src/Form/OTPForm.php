@@ -9,18 +9,19 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Ajax\RedirectCommand;
-use Drupal\email_login_otp\OTP;
 use Drupal\user\Entity\User;
 /**
  * Class OTPForm.
  */
-class OTPForm extends FormBase {
+class OtpForm extends FormBase {
   protected $messenger;
   protected $loggerFactory;
   private $tempStoreFactory;
+  private $otp_service;
 
   public function __construct(PrivateTempStoreFactory $tempStoreFactory) {
     $this->tempStoreFactory = $tempStoreFactory;
+    $this->otp_service = \Drupal::service('email_login_otp.otp');
   }
 
   public static function create(ContainerInterface $container) {
@@ -64,11 +65,10 @@ class OTPForm extends FormBase {
 
   public function ajaxOTPCallback(array &$form, FormStateInterface $form_state) {
     $response = new AjaxResponse();
-    $otp = new OTP();
     $tempstore = $this->tempStoreFactory->get('email_login_otp');
     $uid = $tempstore->get('uid');
     $value = $form_state->getValue('otp');
-    if ($otp->check($uid, $value) == false) {
+    if ($this->otp_service->check($uid, $value) == false) {
       $form_state->setErrorByName('otp', $this->t('Invalid or expired OTP.'));
     }
     if ($form_state->getErrors()) {
@@ -82,7 +82,7 @@ class OTPForm extends FormBase {
       return $response;
     }
     $account = User::load($uid);
-    $otp->expire($uid);
+    $this->otp_service->expire($uid);
     $tempstore->delete('uid');
     user_login_finalize($account);
     $redirect_command = new RedirectCommand('/user');
