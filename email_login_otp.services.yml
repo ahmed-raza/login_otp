@@ -1,6 +1,9 @@
 services:
   email_login_otp.login_redirect:
-    class: Drupal\email_login_otp\EventSubscriber\OTPRedirectSubscriber
+    class: Drupal\email_login_otp\EventSubscriber\OtpRedirectSubscriber
     arguments: []
     tags:
       - { name: event_subscriber }
+  email_login_otp.otp:
+    class: Drupal\email_login_otp\Services\OTP
+    arguments: ['@database']
