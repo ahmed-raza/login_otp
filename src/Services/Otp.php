@@ -1,16 +1,19 @@
 <?php
 
-namespace Drupal\email_login_otp;
+namespace Drupal\email_login_otp\Services;
+use Drupal\Core\Database\Connection;
 
-class OTP {
+class Otp {
+  protected $database;
   private $username;
   private $tempStorageFactory;
 
-  public function __construct() {
+  public function __construct(Connection $connection) {
     $this->tempStorageFactory = \Drupal::service('tempstore.private');
+    $this->database = $connection;
   }
 
-  public function generateOTP($username) {
+  public function generate($username) {
     $this->username = $username;
     $uid = $this->getField('uid');
     $this->tempStorageFactory->get('email_login_otp')->set('uid', $uid);
@@ -21,7 +24,7 @@ class OTP {
     return $this->new($uid);
   }
 
-  public function sendOTP($otp) {
+  public function send($otp) {
     $mail_manager = \Drupal::service('plugin.manager.mail');
 
     $to = $this->getField('mail');
@@ -36,8 +39,7 @@ class OTP {
 
   public function check($uid, $otp) {
     if ($this->exists($uid)) {
-      $database = \Drupal::database();
-      $select = $database->select('email_login_otp', 'u')
+      $select = $this->database->select('email_login_otp', 'u')
                 ->fields('u', ['otp', 'expiration'])
                 ->condition('uid', $uid, '=')
                 ->execute()
@@ -51,16 +53,14 @@ class OTP {
   }
 
   public function expire($uid) {
-    $database = \Drupal::database();
-    $delete = $database->delete('email_login_otp')
+    $delete = $this->database->delete('email_login_otp')
               ->condition('uid', $uid)
               ->execute();
     return $delete;
   }
 
   private function getField($field) {
-    $database = \Drupal::database();
-    $query = $database->select('users_field_data', 'u')
+    $query = $this->database->select('users_field_data', 'u')
               ->fields('u', [$field])
               ->condition('name', $this->username, '=')
               ->execute()
@@ -69,8 +69,7 @@ class OTP {
   }
 
   private function exists($uid) {
-    $database = \Drupal::database();
-    $exists = $database->select('email_login_otp', 'u')
+    $exists = $this->database->select('email_login_otp', 'u')
               ->fields('u')
               ->condition('uid', $uid, '=')
               ->execute()
@@ -80,8 +79,7 @@ class OTP {
 
   private function new($uid) {
     $human_readable_otp = rand(100000, 999999);
-    $database = \Drupal::database();
-    $insert_otp_info = $database->insert('email_login_otp')->fields([
+    $insert_otp_info = $this->database->insert('email_login_otp')->fields([
       'uid' => $uid,
       'otp' => \Drupal::service('password')->hash($human_readable_otp),
       'expiration' => strtotime("+5 minutes",time())
@@ -91,8 +89,7 @@ class OTP {
 
   private function update($uid) {
     $human_readable_otp = rand(100000, 999999);
-    $database = \Drupal::database();
-    $update_otp_info = $database->update('email_login_otp')
+    $update_otp_info = $this->database->update('email_login_otp')
               ->fields([
                 'otp' => \Drupal::service('password')->hash($human_readable_otp),
                 'expiration' => strtotime("+5 minutes",time())
